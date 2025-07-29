@@ -1,5 +1,12 @@
 # Reentrancy Exploit — POC
 
+> ✅ Solidity Security Practice  
+> 🛡️ Reentrancy POC with explanation and mitigation  
+> 👨‍💻 Author: [@Smack0FF](https://github.com/Smack0FF)  
+> 📂 Part of: [solidity-security-practice](https://github.com/Smack0FF/solidity-security-practice)
+
+---
+
 ## 🔍 Vulnerability Description
 
 The `VulnerableBank` contract allows users to deposit and withdraw Ether. However, its `withdraw()` function sends Ether **before** resetting the user's balance, violating the Checks-Effects-Interactions pattern.  
@@ -30,7 +37,7 @@ balances[msg.sender] = 0;
 
 * The Ether is sent before the balance is cleared
 
-* msg.sender is a contract (Attacker) with a receive() function that calls withdraw() again
+* `msg.sender` is a contract (`Attacker`) with a `receive()` function that calls `withdraw()` again
 
 * The recursive call happens while the original withdraw() is still executing, so the balance hasn’t been reset
 
@@ -64,7 +71,7 @@ modifier noReentrancy() {
 }
 ```
 
-Or use .transfer() instead of .call, which automatically limits gas to 2300 and prevents complex fallback execution:
+Or use `.transfer()` instead of `.call`, which automatically limits gas to 2300 and prevents complex fallback execution:
 ```solidity
 payable(msg.sender).transfer(amount);
 ```
@@ -84,7 +91,7 @@ payable(msg.sender).transfer(amount);
 After deploying both contracts in Remix and sending 1 ETH via `attack()`,
 the attacker drains the entire balance of `VulnerableBank`.
 
-```sql
+```
 Attacker initial deposit: 1 ETH  
 Final Attacker balance: > 1 ETH  
 Final Bank balance: 0

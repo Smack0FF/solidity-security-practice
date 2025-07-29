@@ -72,10 +72,35 @@ modifier noReentrancy() {
 ```
 
 Or use `.transfer()` instead of `.call`, which automatically limits gas to 2300 and prevents complex fallback execution:
+
+⚠️ However, .transfer() is now considered less flexible due to EIP-1884 and possible gas cost changes — so .call with proper protections is preferred in modern contracts.
 ```solidity
 payable(msg.sender).transfer(amount);
 ```
-⚠️ However, .transfer() is now considered less flexible due to EIP-1884 and possible gas cost changes — so .call with proper protections is preferred in modern contracts.
+
+Or use OpenZeppelin’s `ReentrancyGuard`, a production-ready and widely adopted solution to prevent reentrant calls:
+
+```solidity
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+contract SecureBank is ReentrancyGuard {
+    mapping(address => uint256) public balances;
+
+    function deposit() public payable {
+        balances[msg.sender] += msg.value;
+    }
+
+    function withdraw() public nonReentrant {
+        uint amount = balances[msg.sender];
+        require(amount > 0, "Nothing to withdraw");
+
+        balances[msg.sender] = 0;
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success, "Transfer failed");
+    }
+}
+```
+`nonReentrant` is a built-in modifier that ensures the function cannot be re-entered before it finishes execution.
 
 ---
 
